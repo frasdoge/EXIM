@@ -1,0 +1,310 @@
+Version 1
+SubGoalCombiner SGC_AND
+INITSECTION
+
+KBSECTION
+//Lua reload at gamestart
+IF
+GameStarted(_, _)
+THEN
+NRD_LuaReset(1);
+NRD_DebugLog("Game Started");
+
+//Give saving and loading stones in Adventure mode
+IF
+GameStarted(_, 0)
+AND
+DB_CurrentGameMode(_GameMode)
+AND
+_GameMode == "Campaign"
+THEN
+TimerLaunch("LX_Give_Players_Stones", 5000);
+
+IF
+TimerFinished("LX_Give_Players_Stones")
+THEN
+NRD_DebugLog("Giving players stones...");
+IterateUsers("LX_Get_Users_Characters");
+
+IF
+UserEvent(_UserID, "LX_Get_Users_Characters")
+AND
+GetCurrentCharacter(_UserID, _Char)
+THEN
+ItemTemplateRemoveFrom("EXIM_SavingStone_236d9882-64f0-487f-87b9-cc7a695d66d0", _Char, 99);
+ItemTemplateRemoveFrom("EXIM_LoadingStone_758fd0ec-4582-4be4-8f01-6b23203386d9", _Char, 99);
+ItemTemplateAddTo("EXIM_SavingStone_236d9882-64f0-487f-87b9-cc7a695d66d0", _Char, 1, 0);
+ItemTemplateAddTo("EXIM_LoadingStone_758fd0ec-4582-4be4-8f01-6b23203386d9", _Char, 1, 0);
+
+//Editor debug only
+IF
+CharacterUsedSkill(_Char, "Shout_FleshSacrifice", _, _)
+THEN
+GenerateTreasure(LOOT_Pouch_A_000_5156573e-8470-4077-9163-571edc82099d, "ST_WeaponGenTrader", 16, _Char);
+GenerateTreasure(LOOT_Pouch_A_000_5156573e-8470-4077-9163-571edc82099d, "ST_ArmorGenTrader", 16, _Char);
+ContainerIdentifyAll(LOOT_Pouch_A_000_5156573e-8470-4077-9163-571edc82099d);
+
+//Save character trigger
+IF
+CharacterUsedItem(_Char, _Item)
+AND
+GetTemplate(_Item, _Template)
+AND
+_Template == "EXIM_SavingStone_236d9882-64f0-487f-87b9-cc7a695d66d0"
+THEN
+SetStoryEvent(_Char, "LX_Save_Character");
+
+IF
+StoryEvent((ITEMGUID)_Item, "GM_Export")
+AND
+DB_GM_Selection((CHARACTERGUID)_Char)
+THEN
+SetStoryEvent(_Char, "LX_Save_Character");
+
+//// Save character ////
+IF
+StoryEvent((CHARACTERGUID)_Char, "LX_Save_Character")
+AND
+CharacterGetMaxSourcePoints(_Char, _MaxSP)
+THEN
+SetVarInteger(_Char, "LX_Max_SP", _MaxSP);
+
+IF
+StoryEvent((CHARACTERGUID)_Char, "LX_Save_Character")
+AND
+GetPosition(_Char, _X, _Y, _Z)
+AND
+TemporaryCharacterCreateAtPosition(_X, _Y, _Z, "25611432-e5e4-482a-8f5d-196c9e90001e", 0, _Temp)
+AND
+//LX_EXT_UnequipCharacter(_Char) //Unequip items so skill save won't take skills given by items
+LX_EXT_SaveHotbar(_Char) //Also unequip items
+AND
+LX_EXT_InitSavingInventory(_Char)
+AND
+QRY_LX_Get_Inventory((GUIDSTRING)_Char)
+THEN
+SetVarString(_Temp, "LX_Skills_Save", "");
+DB_EXIM_Saving_Char((CHARACTERGUID)_Char, _Temp);
+SetVarString(_Char, "LX_Inventory", "");
+CharacterTransformFromCharacter(_Temp, (CHARACTERGUID)_Char, 1, 1, 1, 1, 1, 1, 0); //Skills saving
+TimerLaunch("LX_Saving_Process", 500);
+
+//Saving character skills
+IF
+SkillAdded(_Char, _Skill, _)
+AND
+DB_EXIM_Saving_Char(_, _Char)
+AND
+GetVarString(_Char, "LX_Skills_Save", _SkillsString)
+AND
+StringConcatenate(_SkillsString, _Skill, _SkillsString2)
+AND
+StringConcatenate(_SkillsString2, "<br>", _SkillsStringFinal)
+THEN
+SetVarString(_Char, "LX_Skills_Save", _SkillsStringFinal);
+
+IF
+TimerFinished("LX_Saving_Process")
+AND
+DB_EXIM_Saving_Char(_Char, _Temp)
+AND
+CharacterGetDisplayName(_Char, _, _Name)
+THEN
+DebugBreak("Saving char...");
+LX_EXT_SaveInventory(_Char);
+LX_EXT_SaveCharacterData(_Char, _Name, _Temp);
+NOT DB_EXIM_Saving_Char(_Char, _Temp);
+SetVarString(_Char, "LX_Skills_Save", ""); //Empty skill list.
+SetVarString(_Char, "LX_Hotbar", "");
+
+//// Inventory saving process ////
+//Unused
+QRY
+QRY_LX_Get_Inventory((GUIDSTRING)_Holder)
+THEN
+InventoryLaunchIterator(_Holder, "Inventory_Count", "Inventory_Count_Done");
+PROC_LX_Set_Inventory_Holder((GUIDSTRING)_Holder);
+
+//GUIDSTRING compatibility with containers not being characters because f*ck Osiris
+PROC
+PROC_LX_Set_Inventory_Holder((GUIDSTRING)_Holder)
+THEN
+DB_EXIM_Counting_Inventory(_Holder);
+
+//Item iteration during inventory checkup
+IF
+StoryEvent((ITEMGUID)_Item, "Inventory_Count")
+AND
+DB_EXIM_Counting_Inventory(_Holder)
+AND
+ItemIsEquipable(_Item, 0)
+THEN
+LX_EXT_StoreHolderItem(_Holder, _Item);
+
+//Equipment iteration during inventory checkup
+IF
+StoryEvent((ITEMGUID)_Item, "Inventory_Count")
+AND
+DB_EXIM_Counting_Inventory(_Holder)
+AND
+ItemIsEquipable(_Item, 1)
+AND
+NRD_ItemGetGenerationParams(_Item, _StatsID, _ItemType, _Level, (INTEGER)_Seed)
+AND
+NRD_IntegertoString(_Seed, _SeedStr)
+THEN
+SetVarInteger(_Item, "LX_Seed", _Seed);
+LX_EXT_StoreHolderItem(_Holder, _Item);
+
+//Proc for iterating in containers
+PROC
+PROC_LX_Launch_Inventory_Iterator_Container((GUIDSTRING)_Container, (STRING)_EventName, (STRING)_EndFlag)
+THEN
+DB_EXIM_Counting_Inventory_Containers(_Container, _EventName, _EndFlag);
+InventoryLaunchIterator(_Container, _EventName, _EndFlag);
+
+//Item iteration inside containers of the character
+IF
+StoryEvent((ITEMGUID)_Item, _InventoryEvent)
+AND
+DB_EXIM_Counting_Inventory_Containers(_Holder, _InventoryEvent, _)
+THEN
+LX_EXT_StoreHolderItem(_Holder, _Item);
+
+//End event when inventory checkup done for item containers
+IF
+GlobalFlagSet(_EndFlag)
+AND
+DB_EXIM_Counting_Inventory_Containers(_Holder, _Event, _EndFlag)
+THEN
+NOT DB_EXIM_Counting_Inventory_Containers(_Holder, _Event,  _EndFlag);
+LX_EXT_CheckInventory(_Holder);
+
+//End event when inventory checkup done
+IF
+GlobalFlagSet("Inventory_Count_Done")
+AND
+DB_EXIM_Counting_Inventory(_Holder)
+AND
+DB_EXIM_Saving_Char(_Char, _)
+THEN
+NOT DB_EXIM_Counting_Inventory(_Holder);
+GlobalClearFlag("Inventory_Count_Done");
+LX_EXT_CheckInventory(_Holder);
+
+//Iterate through equipment deltamods
+IF
+NRD_ItemDeltaModIteratorEvent("LX_Get_Equipment_Deltamods", (ITEMGUID)_Item, (STRING)_Deltamod, _)
+AND
+GetVarString(_Item, "LX_Item_Deltamods", _ItemMods)
+AND
+StringConcatenate(_ItemMods, _Deltamod, _ItemMods2)
+AND
+StringConcatenate(_ItemMods2, ";", _ItemMods3)
+THEN
+SetVarString(_Item, "LX_Item_Deltamods", _ItemMods3);
+
+//// Skill Loading Process ////
+IF
+StoryEvent((CHARACTERGUID)_Char, "LX_Start_Load_Skills")
+THEN
+DB_EXIM_Load_Skills(_Char);
+TimerLaunch("LX_Timer_Skills", 20);
+NRD_CharacterIterateSkills(_Char, "LX_Parse_Skills");
+
+
+IF
+NRD_SkillIteratorEvent("LX_Parse_Skills", (CHARACTERGUID)_Char, (STRING)_Skill, _, _)
+AND
+GetVarString(_Char, "LX_Skills_Save", _SkillsString)
+AND
+StringConcatenate(_SkillsString, _Skill, _SkillsString2)
+AND
+StringConcatenate(_SkillsString2, "<br>", _SkillsStringFinal)
+THEN
+SetVarString(_Char, "LX_Skills_Save", _SkillsStringFinal);
+
+IF
+TimerFinished("LX_Timer_Skills")
+AND
+DB_EXIM_Load_Skills(_Char)
+THEN
+NOT DB_EXIM_Load_Skills(_Char);
+LX_EXT_LoadSkills(_Char);
+SetVarString(_Char, "LX_Skills_Save", "");
+
+//Character load cleaning
+IF
+TimerFinished("LX_Cleaning_Character_Load")
+AND
+DB_EXIM_Loading_Character(_Char)
+THEN
+LX_EXT_CleanCharacterPoints(_Char);
+NOT DB_EXIM_Loading_Character(_Char);
+
+//Clear character inventory on load
+IF
+StoryEvent((ITEMGUID)_Item, "LX_Inventory_Clear")
+THEN
+ItemRemove(_Item);
+
+//// Loading character process ////
+IF
+CharacterUsedItem(_Char, _Item)
+AND
+GetTemplate(_Item, _Template)
+AND
+_Template == "EXIM_LoadingStone_758fd0ec-4582-4be4-8f01-6b23203386d9"
+THEN
+SetStoryEvent(_Char, "LX_Load_Character");
+
+IF
+StoryEvent((ITEMGUID)_Item, "GM_Import")
+AND
+DB_GM_Selection(_Char)
+THEN
+SetStoryEvent(_Char, "LX_Load_Character");
+
+IF
+StoryEvent((CHARACTERGUID)_Char, "LX_Load_Character")
+THEN
+InventoryLaunchIterator(_Char, "LX_Inventory_Clear", "LX_Inventory_Clear_Done");
+DB_EXIM_Loading_Character(_Char);
+TimerLaunch("LX_Load_Character_Start", 500);
+
+IF
+TimerFinished("LX_Load_Character_Start")
+AND
+DB_EXIM_Loading_Character(_Char)
+THEN
+LX_EXT_LoadCharacter(_Char);
+
+
+IF
+TimerFinished("LX_Load_Character_Start")
+AND
+DB_CurrentGameMode(_GameMode)
+AND
+_GameMode == "Campaign"
+THEN
+TimerLaunch("LX_Give_Players_Stones", 5000);
+
+//// Hotbar restoration ////
+IF
+StoryEvent((CHARACTERGUID)_Char, "LX_Restore_Hotbar")
+THEN
+DB_EXIM_Loading_Hotbar(_Char);
+TimerLaunch("LX_LoadHotbar", 500);
+
+IF
+TimerFinished("LX_LoadHotbar")
+AND
+DB_EXIM_Loading_Hotbar(_Char)
+THEN
+LX_EXT_LoadHotbar(_Char);
+NOT DB_EXIM_Loading_Hotbar(_Char);
+
+
+EXITSECTION
+
+ENDEXITSECTION

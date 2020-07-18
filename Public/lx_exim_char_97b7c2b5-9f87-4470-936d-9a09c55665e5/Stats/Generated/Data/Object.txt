@@ -1,0 +1,8 @@
+new entry "LOOT_SaveLoad_Stone_A"
+type "Object"
+using "_Generics"
+data "RootTemplate" "a98093d6-45c2-4e52-bef8-271b8aa538ec"
+data "Value" "0"
+data "Weight" "0"
+data "InventoryTab" "Misc"
+

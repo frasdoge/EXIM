@@ -1,0 +1,26 @@
+INIT
+	ITEM: __Me
+
+EVENTS
+EVENT Init
+VARS
+	ITEMTEMPLATE: _Item
+ON
+	OnInit()
+ACTIONS
+	ItemEvent(__Me, "GM_Check")
+	//Export
+	IF "c1&c2"
+		ItemGetTemplate(__Me, _Item)
+		IsEqual(_Item, "ITEMGUID_GM_Exim_Export_88fe936c-3ef6-4731-a99f-8cbca2195065")
+	THEN
+		ItemEvent(__Me, "GM_Export")
+	ENDIF
+
+	//Import
+	IF "c1&c2"
+		ItemGetTemplate(__Me, _Item)
+		IsEqual(_Item, "ITEMGUID_GM_Exim_Import_bfa78e36-0810-4462-9ff8-3ab0ffe32b58")
+	THEN
+		ItemEvent(__Me, "GM_Import")
+	ENDIF

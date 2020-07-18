@@ -1,0 +1,29 @@
+EVENTS
+EVENT LX_Get_Item_Level
+VARS
+	ITEM: _Item
+	FLOAT: _LevelF
+	INT: _Level
+	STRING: _Out
+ON
+	OnItemEvent(_Item, "LX_Get_Item_Level")
+ACTIONS
+	IF "c1"
+		ItemGetStat(_LevelF, _Item, "Level")
+	THEN
+		Cast(_Level, _LevelF)
+		SetVar(_Item, "LX_Item_Level", _Level)
+	ENDIF
+
+EVENT LX_Get_Item_Quality
+VARS
+	ITEM: _Item
+	FIXEDSTRING: _Out
+ON
+	OnItemEvent(_Item, "LX_Get_Item_Quality")
+ACTIONS
+	IF "c1"
+		ItemGetItemType(_Item, _Out)
+	THEN
+		SetVar(_Item, "LX_Item_Quality", _Out)
+	ENDIF

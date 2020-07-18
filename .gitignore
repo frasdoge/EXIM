@@ -1,0 +1,119 @@
+# SourceControlGenerator #
+##########################
+SourceControlGenerator.json
+
+# Levels
+######################
+Mods/lx_exim_char_97b7c2b5-9f87-4470-936d-9a09c55665e5/Levels/*
+Mods/lx_exim_char_97b7c2b5-9f87-4470-936d-9a09c55665e5/Globals/*
+Editor/Mods/lx_exim_char_97b7c2b5-9f87-4470-936d-9a09c55665e5/Levels/*
+
+# Story files        #
+######################
+*.div
+*.raw
+story_orphanqueries_ignore.txt
+Mods/lx_exim_char_97b7c2b5-9f87-4470-936d-9a09c55665e5/Story/Dialogs/Autosave/*
+Mods/lx_exim_char_97b7c2b5-9f87-4470-936d-9a09c55665e5/Story/Dialogs/Recovered/*
+
+# Asset Folders      #
+######################
+Public/lx_exim_char_97b7c2b5-9f87-4470-936d-9a09c55665e5/Assets/*
+#Public/lx_exim_char_97b7c2b5-9f87-4470-936d-9a09c55665e5/GUI/*
+
+# Editor files       #
+######################
+RootTemplateSelectorConfig_*
+ResourceSelectorConfig_*
+StatsEditorConfig.xml
+EffectEditorConfig.xml
+DockPanel.config
+EditorBrowserMetadata_*
+EditorBrowserMetadata.xml
+Autosave/*
+Recovered/*
+ReConHistory.txt
+story.debugInfo
+
+# Assets             #
+######################
+*.gr2
+*.dae
+*.swf
+*.bullet
+*.dds
+*.tga
+*.png
+*.ttf
+*.lsb
+*.lsf
+*.lsfx
+*.lsefx
+#*.lsx
+*.lsmg
+
+# Logs               #
+######################
+*.log
+*.ailog
+log.txt
+errors.txt
+dialoglog.txt
+personallog.txt
+
+# Binary Files       #
+######################
+*.dat
+*.data
+*.bik
+*.bnk
+*.bshd
+*.cur
+*.fnt
+*.iggy
+*.iggytex
+*.osi
+*.patch
+*.tmpl
+
+# Dump files         #
+######################
+*.stackdump
+*.dmp
+
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages #
+############
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# VS Code #
+############
+launch.json
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.lnk
+
+
